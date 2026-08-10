@@ -1,0 +1,7 @@
+name: Quest
+version: '1.0-SNAPSHOT'
+main: kr.hanwinter.quest.Main
+api-version: '1.21'
+commands:
+  퀘스트관리:
+    description: 퀘스트를 관리한다.
