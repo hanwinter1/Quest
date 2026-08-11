@@ -3,18 +3,15 @@ package kr.hanwinter.quest.quest;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Quest {
     public String getName() {
         return name;
     }
 
-    public List<Component> getDialogue() {
-        return dialogue;
+    public Set<String> getPreQuest() {
+        return preQuest;
     }
 
     public List<QuestStep> getSteps() {
@@ -33,9 +30,9 @@ public class Quest {
         return isSequential;
     }
 
-    public Quest(String name, List<Component> dialogue, List<QuestStep> steps, Integer experienceReward, Integer moneyReward, Boolean isSequential) {
+    public Quest(String name, Set<String> preQuest, List<QuestStep> steps, Integer experienceReward, Integer moneyReward, Boolean isSequential) {
         this.name = name;
-        this.dialogue = dialogue;
+        this.preQuest = preQuest;
         this.steps = steps;
         this.experienceReward = experienceReward;
         this.moneyReward = moneyReward;
@@ -43,7 +40,7 @@ public class Quest {
     }
 
     private String name;
-    private List<Component> dialogue;
+    private Set<String> preQuest;
     private List<QuestStep> steps;
     private Integer experienceReward;
     private Integer moneyReward;

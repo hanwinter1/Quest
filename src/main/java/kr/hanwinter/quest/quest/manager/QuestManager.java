@@ -24,8 +24,8 @@ public class QuestManager {
         dataFile = new File(serverInstance.getDataFolder(), "questList");
     }
 
-    public void addQuest(String name, List<Component> dialogue, List<QuestStep> steps, Integer experienceReward, Integer moneyReward, Boolean isSequential) {
-        Quest quest = new Quest(name, dialogue, steps, experienceReward, moneyReward, isSequential);
+    public void addQuest(String name, Set<String> preQuest, List<QuestStep> steps, Integer experienceReward, Integer moneyReward, Boolean isSequential) {
+        Quest quest = new Quest(name, preQuest, steps, experienceReward, moneyReward, isSequential);
         questList.add(quest);
         saveQuestFile(quest);
     }
@@ -38,12 +38,7 @@ public class QuestManager {
         File questFile = new File(dataFile, quest.getName() + ".yml");
         FileConfiguration questConfigFile = YamlConfiguration.loadConfiguration(questFile);
         questConfigFile.set("name", quest.getName());
-        List<String> stringList = new ArrayList<>();
-        for (Component text : quest.getDialogue()) {
-            String serialized = LegacyComponentSerializer.legacyAmpersand().serialize(text);
-            stringList.add(serialized);
-        }
-        questConfigFile.set("dialogue", stringList);
+        questConfigFile.set("preQuest", quest.getPreQuest());
         questConfigFile.set("steps", quest.getSteps());
         questConfigFile.set("experienceReward", quest.getExperienceReward());
         questConfigFile.set("moneyReward", quest.getExperienceReward());
@@ -61,18 +56,13 @@ public class QuestManager {
             for(File questFile : files) {
                 FileConfiguration questConfigFile = YamlConfiguration.loadConfiguration(questFile);
                 String name = questConfigFile.getString("name");
-                List<String> stringList = questConfigFile.getStringList("dialogue");
-                List<Component> dialogue = new ArrayList<>();
-                for(String text : stringList) {
-                    Component component = LegacyComponentSerializer.legacyAmpersand().deserialize(text);
-                    dialogue.add(component);
-                }
+                List<String> stringList = questConfigFile.getStringList("preQuest");
+                Set<String> preQuest = new HashSet<>(stringList);
                 List<?> list = questConfigFile.getList("steps");
                 List<QuestStep> steps = new ArrayList<>();
 
                 if (list != null) {
                     for (Object obj : list) {
-                        // 리스트 안의 요소가 우리가 만든 QuestStep 객체가 맞는지 확인
                         if (obj instanceof QuestStep) {
                             steps.add((QuestStep) obj);
                         }
@@ -82,7 +72,8 @@ public class QuestManager {
                 int moneyReward = questConfigFile.getInt("moneyReward");
                 boolean isSequential = questConfigFile.getBoolean("isSequential");
 
-                Quest quest = new Quest(name, dialogue, steps, experienceReward, moneyReward, isSequential);
+                Quest quest = new Quest(name, preQuest, steps, experienceReward, moneyReward, isSequential);
+                questList.add(quest);
             }
         }
     }
