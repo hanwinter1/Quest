@@ -27,10 +27,12 @@ import java.util.List;
 
 public class NPCConversationGUI implements InventoryHolder {
     private final Inventory inventory;
-    private final Dialogue dialogue;
+    private Dialogue dialogue;
     private final NPC npc;
     private final Main serverInstance;
     private int currentIndex = 0;
+    public static final ItemStack AIR = ItemUtil.createItem(Material.AIR, null, null);
+    public static final ItemStack BLACK_STAINED_GLASS_PANE = ItemUtil.createItem(Material.BLACK_STAINED_GLASS_PANE, Component.text(""), null);
 
     public NPCConversationGUI(Dialogue dialogue, NPC npc, Main serverInstance) {
         this.dialogue = dialogue;
@@ -39,12 +41,11 @@ public class NPCConversationGUI implements InventoryHolder {
         inventory = Bukkit.createInventory(this, 27, Component.text("대화문"));
 
         updateDialogueItem();
-        ItemStack blackStainedGlassPane = ItemUtil.createItem(Material.BLACK_STAINED_GLASS_PANE, Component.text(""), null);
         for(int i=0; i<9; i++) {
-            inventory.setItem(i, blackStainedGlassPane);
+            inventory.setItem(i, BLACK_STAINED_GLASS_PANE);
         }
         for(int i=18; i<27; i++) {
-            inventory.setItem(i, blackStainedGlassPane);
+            inventory.setItem(i, BLACK_STAINED_GLASS_PANE);
         }
     }
 
@@ -89,6 +90,21 @@ public class NPCConversationGUI implements InventoryHolder {
         }
     }
 
+    public void newDialogue(Dialogue dialogue1) {
+        currentIndex = 0;
+        dialogue = dialogue1;
+        for(int i=0; i<9; i++) {
+            inventory.setItem(i, BLACK_STAINED_GLASS_PANE);
+        }
+        for(int i=9; i<18; i++) {
+            inventory.setItem(i, AIR);
+        }
+        for(int i=18; i<27; i++) {
+            inventory.setItem(i, BLACK_STAINED_GLASS_PANE);
+        }
+        updateDialogueItem();
+    }
+
     public void getQuest() {
 
     }
@@ -122,6 +138,10 @@ public class NPCConversationGUI implements InventoryHolder {
                         }
                         break;
                     case 5, 6, 7, 14, 15, 16, 23, 24, 25:
+                        ItemStack currentItemStack = event.getCurrentItem();
+                        ItemMeta currentItemMeta = currentItemStack.getItemMeta();
+                        String name = currentItemMeta.getPersistentDataContainer().get(gui.serverInstance.getOriginalNameKey(), PersistentDataType.STRING);
+                        gui.newDialogue(gui.serverInstance.getDialogueManager().getDialogueMap().get(name));
                         break;
                 }
             }
