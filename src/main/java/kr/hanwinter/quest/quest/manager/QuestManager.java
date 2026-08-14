@@ -15,39 +15,17 @@ import java.io.IOException;
 import java.util.*;
 
 public class QuestManager {
-    private final Set<Quest> questList = new HashSet<>();
+    private final Set<Quest> questSet = new HashSet<>();
     private final File dataFile;
     private final Main serverInstance;
+
+    public Set<Quest> getQuestSet() {
+        return questSet;
+    }
 
     public QuestManager(Main serverInstance) {
         this.serverInstance = serverInstance;
         dataFile = new File(serverInstance.getDataFolder(), "questList");
-    }
-
-    public void addQuest(String name, Set<String> preQuest, List<QuestStep> steps, Integer experienceReward, Integer moneyReward, Boolean isSequential) {
-        Quest quest = new Quest(name, preQuest, steps, experienceReward, moneyReward, isSequential);
-        questList.add(quest);
-        saveQuestFile(quest);
-    }
-
-    public void editQuest() {
-        // 이후 추가
-    }
-
-    public void saveQuestFile(Quest quest) {
-        File questFile = new File(dataFile, quest.getName() + ".yml");
-        FileConfiguration questConfigFile = YamlConfiguration.loadConfiguration(questFile);
-        questConfigFile.set("name", quest.getName());
-        questConfigFile.set("preQuest", quest.getPreQuest());
-        questConfigFile.set("steps", quest.getSteps());
-        questConfigFile.set("experienceReward", quest.getExperienceReward());
-        questConfigFile.set("moneyReward", quest.getExperienceReward());
-        questConfigFile.set("isSequential", quest.getSequential());
-        try {
-            questConfigFile.save(questFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     public void loadAllQuestFile() {
@@ -57,7 +35,6 @@ public class QuestManager {
                 FileConfiguration questConfigFile = YamlConfiguration.loadConfiguration(questFile);
                 String name = questConfigFile.getString("name");
                 List<String> stringList = questConfigFile.getStringList("preQuest");
-                Set<String> preQuest = new HashSet<>(stringList);
                 List<?> list = questConfigFile.getList("steps");
                 List<QuestStep> steps = new ArrayList<>();
 
@@ -72,8 +49,8 @@ public class QuestManager {
                 int moneyReward = questConfigFile.getInt("moneyReward");
                 boolean isSequential = questConfigFile.getBoolean("isSequential");
 
-                Quest quest = new Quest(name, preQuest, steps, experienceReward, moneyReward, isSequential);
-                questList.add(quest);
+                Quest quest = new Quest(name, steps, experienceReward, moneyReward, isSequential);
+                questSet.add(quest);
             }
         }
     }

@@ -1,4 +1,4 @@
-package kr.hanwinter.quest.item;
+package kr.hanwinter.quest.util;
 
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;

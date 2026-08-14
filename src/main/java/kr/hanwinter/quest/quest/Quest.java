@@ -10,10 +10,6 @@ public class Quest {
         return name;
     }
 
-    public Set<String> getPreQuest() {
-        return preQuest;
-    }
-
     public List<QuestStep> getSteps() {
         return steps;
     }
@@ -30,9 +26,8 @@ public class Quest {
         return isSequential;
     }
 
-    public Quest(String name, Set<String> preQuest, List<QuestStep> steps, Integer experienceReward, Integer moneyReward, Boolean isSequential) {
+    public Quest(String name, List<QuestStep> steps, Integer experienceReward, Integer moneyReward, Boolean isSequential) {
         this.name = name;
-        this.preQuest = preQuest;
         this.steps = steps;
         this.experienceReward = experienceReward;
         this.moneyReward = moneyReward;
@@ -40,7 +35,6 @@ public class Quest {
     }
 
     private String name;
-    private Set<String> preQuest;
     private List<QuestStep> steps;
     private Integer experienceReward;
     private Integer moneyReward;

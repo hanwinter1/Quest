@@ -2,6 +2,9 @@ name: Quest
 version: '1.0-SNAPSHOT'
 main: kr.hanwinter.quest.Main
 api-version: '1.21'
+depend: [Citizens]
 commands:
-  퀘스트관리:
-    description: 퀘스트를 관리한다.
+  대화문목록:
+    description: 대화문 목록을 확인한다.
+  quest:
+    description: 퀘스트 관련을 설정한다.
