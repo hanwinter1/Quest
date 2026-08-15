@@ -5,9 +5,15 @@ import kr.hanwinter.quest.dialogue.manager.DialogueManager;
 import kr.hanwinter.quest.npc.gui.NPCConversationGUI;
 import kr.hanwinter.quest.npc.listener.NPCListener;
 import kr.hanwinter.quest.npc.manager.NPCManager;
+import kr.hanwinter.quest.quest.QuestStep;
 import kr.hanwinter.quest.quest.manager.QuestManager;
+import kr.hanwinter.quest.user.listener.UserJoinQuitListener;
+import kr.hanwinter.quest.user.manager.UserManager;
 import kr.hanwinter.quest.util.PluginReload;
+import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
+import org.bukkit.configuration.serialization.ConfigurationSerialization;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class Main extends JavaPlugin {
@@ -15,13 +21,13 @@ public final class Main extends JavaPlugin {
     private DialogueManager dialogueManager;
     private NPCManager npcManager;
     private QuestManager questManager;
+    private UserManager userManager;
     private NamespacedKey originalNameKey;
 
     @Override
     public void onEnable() {
         // Plugin startup logic
-        registerCommands();
-        registerEvents();
+        ConfigurationSerialization.registerClass(QuestStep.class);
         questManager = new QuestManager(this);
         questManager.basicFileSet();
         questManager.loadAllQuestFile();
@@ -31,7 +37,11 @@ public final class Main extends JavaPlugin {
         npcManager = new NPCManager(this);
         npcManager.basicFileSet();
         npcManager.loadAllNpcFile();
+        userManager = new UserManager(this);
+        userManager.basicFileSet();
         originalNameKey = new NamespacedKey(this, "original_name");
+        registerCommands();
+        registerEvents();
     }
 
     public NamespacedKey getOriginalNameKey() {
@@ -46,19 +56,33 @@ public final class Main extends JavaPlugin {
         return npcManager;
     }
 
+    public QuestManager getQuestManager() {
+        return questManager;
+    }
+
+    public UserManager getUserManager() {
+        return userManager;
+    }
+
     public void reloadPluginData() {
-        questManager.getQuestSet().clear();
+        questManager.getQuestMap().clear();
         npcManager.getNPCMap().clear();
         dialogueManager.getDialogueMap().clear();
+        userManager.getUserMap().clear();
 
         questManager.loadAllQuestFile();
         npcManager.loadAllNpcFile();
         dialogueManager.loadAllDialogueFile();
+        userManager.loadAllUserFile();
     }
 
     @Override
     public void onDisable() {
         // Plugin shutdown logic
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            userManager.saveUserDataFile(player);
+        }
+        userManager.getUserMap().clear();
     }
 
     public void registerCommands() {
@@ -69,5 +93,6 @@ public final class Main extends JavaPlugin {
     public void registerEvents() {
         this.getServer().getPluginManager().registerEvents(new NPCListener(this), this);
         this.getServer().getPluginManager().registerEvents(new NPCConversationGUI.NPCConversationGUIListener(), this);
+        this.getServer().getPluginManager().registerEvents(new UserJoinQuitListener(this.userManager), this);
     }
 }

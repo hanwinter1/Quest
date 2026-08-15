@@ -4,13 +4,19 @@ import kr.hanwinter.quest.Main;
 import kr.hanwinter.quest.dialogue.Dialogue;
 import kr.hanwinter.quest.dialogue.manager.DialogueManager;
 import kr.hanwinter.quest.npc.NPC;
+import kr.hanwinter.quest.quest.Quest;
+import kr.hanwinter.quest.quest.QuestStep;
+import kr.hanwinter.quest.user.User;
 import kr.hanwinter.quest.util.ItemUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.title.Title;
+import net.kyori.adventure.util.Ticks;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -106,7 +112,43 @@ public class NPCConversationGUI implements InventoryHolder {
     }
 
     public void getQuest() {
+        Quest quest = serverInstance.getQuestManager().getQuestMap().get(dialogue.getQuest());
+        String sequential = "§r§7(목표 순서대로 진행 §cX§7)";
+        if(quest.getSequential()) {
+            sequential = "§r§7(목표 순서대로 진행 §aO§7)";
+        }
 
+        List<Component> lore = new ArrayList<>(List.of(
+                Component.text(""),
+                LegacyComponentSerializer.legacySection().deserialize(" §e§l[퀘스트 목표]§r " + sequential).decoration(TextDecoration.ITALIC, false)));
+        for(QuestStep questStep : quest.getSteps()) {
+            if(questStep.getType() == QuestStep.QuestType.HUNT) {
+                lore.add(LegacyComponentSerializer.legacySection().deserialize(" §e§l>§r §e" + questStep.getTargetName() + "§f 몬스터 사냥하기 §7(0/" + questStep.getCountGoal() + ")").decoration(TextDecoration.ITALIC, false));
+            }
+            if(questStep.getType() == QuestStep.QuestType.ITEM) {
+                lore.add(LegacyComponentSerializer.legacySection().deserialize(" §e§l>§r §e" + questStep.getTargetName() + "§f 아이템 모으기 §7(0/" + questStep.getItemGoal().getAmount() + ")").decoration(TextDecoration.ITALIC, false));
+            }
+            if(questStep.getType() == QuestStep.QuestType.LOCATION) {
+                lore.add(LegacyComponentSerializer.legacySection().deserialize(" §e§l>§r §e" + questStep.getTargetName() + "§f(으)로 이동하기 §7(0/1)").decoration(TextDecoration.ITALIC, false));
+                int x = questStep.getLocationGoal().getBlockX();
+                int y = questStep.getLocationGoal().getBlockY();
+                int z = questStep.getLocationGoal().getBlockZ();
+                lore.add(LegacyComponentSerializer.legacySection().deserialize(" §8(" + x + " " + y + " " + z + " 좌표로 이동하기)").decoration(TextDecoration.ITALIC, false));
+            }
+        }
+
+        lore.add(Component.text(""));
+        lore.add(LegacyComponentSerializer.legacySection().deserialize(" §a§l[퀘스트 보상]§r").decoration(TextDecoration.ITALIC, false));
+        lore.add(LegacyComponentSerializer.legacySection().deserialize(" §a§l>§r§f §7" + quest.getMoneyReward() + "§f원").decoration(TextDecoration.ITALIC, false));
+        lore.add(LegacyComponentSerializer.legacySection().deserialize(" §a§l>§r§f §7" + quest.getExperienceReward() + " §f경험치").decoration(TextDecoration.ITALIC, false));
+        lore.add(Component.text(""));
+        lore.add(LegacyComponentSerializer.legacySection().deserialize(" §b§l>§r§f 클릭 시 퀘스트를 수락합니다!").decoration(TextDecoration.ITALIC, false));
+        lore.add(Component.text(""));
+        ItemStack questItem = ItemUtil.createItem(Material.KNOWLEDGE_BOOK, LegacyComponentSerializer.legacySection().deserialize("§6§l[퀘스트]§r §f" + dialogue.getQuest()).decoration(TextDecoration.ITALIC, false), lore);
+        ItemMeta questItemMeta = questItem.getItemMeta();
+        questItemMeta.getPersistentDataContainer().set(serverInstance.getOriginalNameKey(), PersistentDataType.STRING, quest.getName());
+        questItem.setItemMeta(questItemMeta);
+        inventory.setItem(13, questItem);
     }
 
     @NotNull
@@ -128,13 +170,51 @@ public class NPCConversationGUI implements InventoryHolder {
 
                 switch(event.getRawSlot()) {
                     case 13:
-                        boolean hasNext = gui.nextDialogue();
-                        if (!hasNext) {
-                            if (gui.dialogue.getQuest() != null) {
-                                gui.getQuest();
-                            } else {
-                                gui.selectNextDialogue(player);
+                        if(event.getCurrentItem().getType() == Material.WRITABLE_BOOK) {
+                            boolean hasNext = gui.nextDialogue();
+                            if (!hasNext) {
+                                if (gui.dialogue.getQuest() != null) {
+                                    gui.getQuest();
+                                } else {
+                                    gui.selectNextDialogue(player);
+                                }
                             }
+                        } else if(event.getCurrentItem().getType() == Material.KNOWLEDGE_BOOK) {
+                            ItemStack currentItemStack = event.getCurrentItem();
+                            ItemMeta currentItemMeta = currentItemStack.getItemMeta();
+                            String name = currentItemMeta.getPersistentDataContainer().get(gui.serverInstance.getOriginalNameKey(), PersistentDataType.STRING);
+                            User user = gui.serverInstance.getUserManager().getUserMap().get(player.getUniqueId());
+                            Quest quest = gui.serverInstance.getQuestManager().getQuestMap().get(name);
+                            if(user.getQuestList().contains(quest)) {
+                                player.closeInventory();
+                                player.playSound(player, Sound.ENTITY_VILLAGER_NO, 1.0f, 0.8f);
+                                Component mainTitle = LegacyComponentSerializer.legacySection().deserialize("§6§l[퀘스트]");
+                                Component subTitle = LegacyComponentSerializer.legacySection().deserialize("§c이미 진행중인 퀘스트입니다!");
+                                Title.Times times = Title.Times.times(Ticks.duration(10), Ticks.duration(40), Ticks.duration(10));
+                                player.showTitle(Title.title(mainTitle, subTitle, times));
+                                return;
+                            }
+                            if(user.getClearedQuests().contains(quest)) {
+                                player.closeInventory();
+                                player.playSound(player, Sound.ENTITY_VILLAGER_NO, 1.0f, 0.8f);
+                                Component mainTitle = LegacyComponentSerializer.legacySection().deserialize("§6§l[퀘스트]");
+                                Component subTitle = LegacyComponentSerializer.legacySection().deserialize("§c이미 완료한 퀘스트입니다!");
+                                Title.Times times = Title.Times.times(Ticks.duration(10), Ticks.duration(40), Ticks.duration(10));
+                                player.showTitle(Title.title(mainTitle, subTitle, times));
+                                return;
+                            }
+                            user.getQuestList().add(quest);
+                            List<Integer> progressList = new ArrayList<>();
+                            for(QuestStep questStep : quest.getSteps()) {
+                                progressList.add(0);
+                            }
+                            user.getProgressMap().put(quest.getName(), progressList);
+                            player.closeInventory();
+                            player.playSound(player, Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
+                            Component mainTitle = LegacyComponentSerializer.legacySection().deserialize("§6§l[퀘스트]");
+                            Component subTitle = LegacyComponentSerializer.legacySection().deserialize("§7" + quest.getName() + "§r 퀘스트를 받았습니다!");
+                            Title.Times times = Title.Times.times(Ticks.duration(10), Ticks.duration(40), Ticks.duration(10));
+                            player.showTitle(Title.title(mainTitle, subTitle, times));
                         }
                         break;
                     case 5, 6, 7, 14, 15, 16, 23, 24, 25:

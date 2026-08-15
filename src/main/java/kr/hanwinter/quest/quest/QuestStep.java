@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class QuestStep implements ConfigurationSerializable {
     public enum QuestType {
-        HUNT("사냥"), LOCATION("이동"), ITEM("아이템");
+        HUNT("사냥하기"), LOCATION("이동하기"), ITEM("아이템 모으기");
 
         private final String displayName;
 
@@ -20,6 +20,26 @@ public class QuestStep implements ConfigurationSerializable {
         public String getDisplayName() {
             return displayName;
         }
+    }
+
+    public QuestType getType() {
+        return type;
+    }
+
+    public String getTargetName() {
+        return targetName;
+    }
+
+    public int getCountGoal() {
+        return countGoal;
+    }
+
+    public Location getLocationGoal() {
+        return locationGoal;
+    }
+
+    public ItemStack getItemGoal() {
+        return itemGoal;
     }
 
     private QuestType type;

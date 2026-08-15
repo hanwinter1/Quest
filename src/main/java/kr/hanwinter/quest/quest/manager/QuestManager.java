@@ -15,12 +15,12 @@ import java.io.IOException;
 import java.util.*;
 
 public class QuestManager {
-    private final Set<Quest> questSet = new HashSet<>();
+    private final Map<String, Quest> questMap = new HashMap<>();
     private final File dataFile;
     private final Main serverInstance;
 
-    public Set<Quest> getQuestSet() {
-        return questSet;
+    public Map<String, Quest> getQuestMap() {
+        return questMap;
     }
 
     public QuestManager(Main serverInstance) {
@@ -50,7 +50,7 @@ public class QuestManager {
                 boolean isSequential = questConfigFile.getBoolean("isSequential");
 
                 Quest quest = new Quest(name, steps, experienceReward, moneyReward, isSequential);
-                questSet.add(quest);
+                questMap.put(name, quest);
             }
         }
     }
