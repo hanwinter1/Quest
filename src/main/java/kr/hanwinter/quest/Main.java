@@ -9,6 +9,9 @@ import kr.hanwinter.quest.quest.command.QuestCommand;
 import kr.hanwinter.quest.quest.gui.QuestGUI;
 import kr.hanwinter.quest.quest.manager.QuestManager;
 import kr.hanwinter.quest.user.listener.UserJoinQuitListener;
+import kr.hanwinter.quest.user.listener.UserMonsterKillListener;
+import kr.hanwinter.quest.user.listener.UserPickupItemListener;
+import kr.hanwinter.quest.user.listener.UserPlayerMoveListener;
 import kr.hanwinter.quest.user.manager.UserManager;
 import kr.hanwinter.quest.util.PluginReload;
 import org.bukkit.Bukkit;
@@ -96,5 +99,8 @@ public final class Main extends JavaPlugin {
         this.getServer().getPluginManager().registerEvents(new NPCConversationGUI.NPCConversationGUIListener(), this);
         this.getServer().getPluginManager().registerEvents(new UserJoinQuitListener(this.userManager), this);
         this.getServer().getPluginManager().registerEvents(new QuestGUI.QuestGUIListener(), this);
+        this.getServer().getPluginManager().registerEvents(new UserMonsterKillListener(this), this);
+        this.getServer().getPluginManager().registerEvents(new UserPickupItemListener(this), this);
+        this.getServer().getPluginManager().registerEvents(new UserPlayerMoveListener(this), this);
     }
 }

@@ -68,10 +68,15 @@ public class QuestStep implements ConfigurationSerializable {
     }
 
     public static QuestStep deserialize(Map<String, Object> map) {
+        int countGoal = 0;
+        Object count = map.get("countGoal");
+        if (count instanceof Number number) {
+            countGoal = number.intValue();
+        }
         return new QuestStep(
                 QuestType.valueOf((String) map.get("questType")),
                 (String) map.get("targetName"),
-                (int) map.get("countGoal"),
+                countGoal,
                 (Location) map.get("locationGoal"),
                 (ItemStack) map.get("itemGoal")
         );

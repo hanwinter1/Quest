@@ -117,6 +117,31 @@ public class NPCConversationGUI implements InventoryHolder {
         updateDialogueItem();
     }
 
+    public void clearQuest(Quest quest) {
+        for(int i=0; i<9; i++) {
+            inventory.setItem(i, BLACK_STAINED_GLASS_PANE);
+        }
+        for(int i=9; i<18; i++) {
+            inventory.setItem(i, AIR);
+        }
+        for(int i=18; i<27; i++) {
+            inventory.setItem(i, BLACK_STAINED_GLASS_PANE);
+        }
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.text(""));
+        lore.add(LegacyComponentSerializer.legacySection().deserialize(" §a§l[퀘스트 보상]§r").decoration(TextDecoration.ITALIC, false));
+        lore.add(LegacyComponentSerializer.legacySection().deserialize(" §a§l>§r§f §7" + quest.getMoneyReward() + "§f원").decoration(TextDecoration.ITALIC, false));
+        lore.add(LegacyComponentSerializer.legacySection().deserialize(" §a§l>§r§f §7" + quest.getExperienceReward() + " §f경험치").decoration(TextDecoration.ITALIC, false));
+        lore.add(Component.text(""));
+        lore.add(LegacyComponentSerializer.legacySection().deserialize(" §b§l>§r§f 클릭 시 퀘스트를 완료합니다!").decoration(TextDecoration.ITALIC, false));
+        lore.add(Component.text(""));
+        ItemStack questClearItem = ItemUtil.createItem(Material.ENCHANTED_BOOK, LegacyComponentSerializer.legacySection().deserialize("§6§l[퀘스트]§r §f" + quest.getName()).decoration(TextDecoration.ITALIC, false), lore);
+        ItemMeta questClearItemMeta = questClearItem.getItemMeta();
+        questClearItemMeta.getPersistentDataContainer().set(serverInstance.getOriginalNameKey(), PersistentDataType.STRING, quest.getName());
+        questClearItem.setItemMeta(questClearItemMeta);
+        inventory.setItem(13, questClearItem);
+    }
+
     public void getQuest() {
         Quest quest = serverInstance.getQuestManager().getQuestMap().get(dialogue.getQuest());
         String sequential = "§r§7(목표 순서대로 진행 §cX§7)";
@@ -174,6 +199,7 @@ public class NPCConversationGUI implements InventoryHolder {
                     return;
                 }
 
+                SWITCH_BLOCK:
                 switch(event.getRawSlot()) {
                     case 13:
                         if(event.getCurrentItem().getType() == Material.WRITABLE_BOOK) {
@@ -221,13 +247,70 @@ public class NPCConversationGUI implements InventoryHolder {
                             Component subTitle = LegacyComponentSerializer.legacySection().deserialize("§7" + quest.getName() + "§r 퀘스트를 받았습니다!");
                             Title.Times times = Title.Times.times(Ticks.duration(10), Ticks.duration(40), Ticks.duration(10));
                             player.showTitle(Title.title(mainTitle, subTitle, times));
+                        } else if(event.getCurrentItem().getType() == Material.ENCHANTED_BOOK) {
+                            ItemStack currentItemStack = event.getCurrentItem();
+                            ItemMeta currentItemMeta = currentItemStack.getItemMeta();
+                            String name = currentItemMeta.getPersistentDataContainer().get(gui.serverInstance.getOriginalNameKey(), PersistentDataType.STRING);
+                            User user = gui.serverInstance.getUserManager().getUserMap().get(player.getUniqueId());
+                            Quest quest = gui.serverInstance.getQuestManager().getQuestMap().get(name);
+                            user.getQuestList().remove(quest);
+                            user.getClearedQuests().add(quest);
+                            user.getProgressMap().remove(name);
+                            player.closeInventory();
+                            player.playSound(player, Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
+                            Component mainTitle = LegacyComponentSerializer.legacySection().deserialize("§6§l[퀘스트]");
+                            Component subTitle = LegacyComponentSerializer.legacySection().deserialize("§7" + quest.getName() + "§r 퀘스트를 완료했습니다!");
+                            Title.Times times = Title.Times.times(Ticks.duration(10), Ticks.duration(40), Ticks.duration(10));
+                            player.showTitle(Title.title(mainTitle, subTitle, times));
+                            player.giveExp(quest.getExperienceReward());
                         }
                         break;
                     case 5, 6, 7, 14, 15, 16, 23, 24, 25:
                         ItemStack currentItemStack = event.getCurrentItem();
-                        ItemMeta currentItemMeta = currentItemStack.getItemMeta();
-                        String name = currentItemMeta.getPersistentDataContainer().get(gui.serverInstance.getOriginalNameKey(), PersistentDataType.STRING);
-                        gui.newDialogue(gui.serverInstance.getDialogueManager().getDialogueMap().get(name));
+                        if(currentItemStack != null && currentItemStack != AIR) {
+                            ItemMeta currentItemMeta = currentItemStack.getItemMeta();
+                            User user = gui.serverInstance.getUserManager().getUserMap().get(player.getUniqueId());
+                            String name = currentItemMeta.getPersistentDataContainer().get(gui.serverInstance.getOriginalNameKey(), PersistentDataType.STRING);
+                            String questName = gui.serverInstance.getDialogueManager().getDialogueMap().get(name).getQuest();
+                            boolean hasPlayerQuest = false;
+                            for(Quest quest : user.getQuestList()) {
+                                if(quest.getName().equals(questName)) {
+                                    hasPlayerQuest = true;
+                                    break;
+                                }
+                            }
+                            if(!hasPlayerQuest) {
+                                gui.newDialogue(gui.serverInstance.getDialogueManager().getDialogueMap().get(name));
+                                break;
+                            }
+                            for(Quest quest : user.getQuestList()) {
+                                if(quest.equals(gui.serverInstance.getQuestManager().getQuestMap().get(questName))) {
+                                    boolean isAllCompleted = true;
+                                    List<Integer> progressList = user.getProgressMap().get(quest.getName());
+                                    for(int i = 0; i<quest.getSteps().size(); i++) {
+                                        QuestStep questStep = quest.getSteps().get(i);
+                                        int current = progressList.get(i);
+                                        int goal = switch (questStep.getType()) {
+                                            case HUNT -> questStep.getCountGoal();
+                                            case ITEM -> questStep.getItemGoal().getAmount();
+                                            case LOCATION -> 1;
+                                        };
+                                        if(current < goal) {
+                                            isAllCompleted = false;
+                                            break;
+                                        }
+                                    }
+
+                                    gui.serverInstance.getLogger().info(String.valueOf(isAllCompleted));
+                                    if(isAllCompleted) {
+                                        gui.clearQuest(quest);
+                                        break SWITCH_BLOCK;
+                                    }
+                                }
+                            }
+                            gui.newDialogue(gui.serverInstance.getDialogueManager().getDialogueMap().get(name));
+                            break;
+                        }
                         break;
                 }
             }

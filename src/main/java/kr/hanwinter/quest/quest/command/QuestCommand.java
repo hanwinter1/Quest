@@ -19,7 +19,7 @@ public class QuestCommand implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String @NotNull [] strings) {
         Player player = (Player) commandSender;
-        player.openInventory(new QuestGUI(serverInstance.getUserManager().getUserMap().get(player.getUniqueId()), serverInstance).getInventory());
+        player.openInventory(new QuestGUI(player, serverInstance).getInventory());
         return false;
     }
 }
