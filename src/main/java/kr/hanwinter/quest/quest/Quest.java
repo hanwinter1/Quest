@@ -34,9 +34,9 @@ public class Quest {
         this.isSequential = isSequential;
     }
 
-    private String name;
-    private List<QuestStep> steps;
-    private Integer experienceReward;
-    private Integer moneyReward;
-    private Boolean isSequential;
+    private final String name;
+    private final List<QuestStep> steps;
+    private final Integer experienceReward;
+    private final Integer moneyReward;
+    private final Boolean isSequential;
 }

@@ -29,6 +29,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 public class NPCConversationGUI implements InventoryHolder {
@@ -74,8 +75,13 @@ public class NPCConversationGUI implements InventoryHolder {
         for(String dialogue1 : npc.getDialogueList()) {
             Dialogue dialogue2 = serverInstance.getDialogueManager().getDialogueMap().get(dialogue1);
             if(dialogue2.getReqLevel() <= player.getLevel()) {
-                //퀘스트 클리어 확인은 나중에 구현
-                dialogueList.add(dialogue2);
+                List<String> clearedQuestsString = new ArrayList<>();
+                for(Quest quest : serverInstance.getUserManager().getUserMap().get(player.getUniqueId()).getClearedQuests()) {
+                    clearedQuestsString.add(quest.getName());
+                }
+                if(new HashSet<>(clearedQuestsString).containsAll(dialogue2.getPreQuest())) {
+                    dialogueList.add(dialogue2);
+                }
             }
         }
         if(!dialogueList.isEmpty()) {
@@ -188,7 +194,7 @@ public class NPCConversationGUI implements InventoryHolder {
                             if(user.getQuestList().contains(quest)) {
                                 player.closeInventory();
                                 player.playSound(player, Sound.ENTITY_VILLAGER_NO, 1.0f, 0.8f);
-                                Component mainTitle = LegacyComponentSerializer.legacySection().deserialize("§6§l[퀘스트]");
+                                Component mainTitle = LegacyComponentSerializer.legacySection().deserialize("");
                                 Component subTitle = LegacyComponentSerializer.legacySection().deserialize("§c이미 진행중인 퀘스트입니다!");
                                 Title.Times times = Title.Times.times(Ticks.duration(10), Ticks.duration(40), Ticks.duration(10));
                                 player.showTitle(Title.title(mainTitle, subTitle, times));
@@ -197,7 +203,7 @@ public class NPCConversationGUI implements InventoryHolder {
                             if(user.getClearedQuests().contains(quest)) {
                                 player.closeInventory();
                                 player.playSound(player, Sound.ENTITY_VILLAGER_NO, 1.0f, 0.8f);
-                                Component mainTitle = LegacyComponentSerializer.legacySection().deserialize("§6§l[퀘스트]");
+                                Component mainTitle = LegacyComponentSerializer.legacySection().deserialize("");
                                 Component subTitle = LegacyComponentSerializer.legacySection().deserialize("§c이미 완료한 퀘스트입니다!");
                                 Title.Times times = Title.Times.times(Ticks.duration(10), Ticks.duration(40), Ticks.duration(10));
                                 player.showTitle(Title.title(mainTitle, subTitle, times));

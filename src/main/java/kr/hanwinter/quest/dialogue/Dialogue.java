@@ -36,10 +36,10 @@ public class Dialogue {
         return reqLevel;
     }
 
-    private String name;
-    private String displayName;
-    private List<String> dialogue;
-    private String quest;
-    private List<String> preQuest;
-    private int reqLevel;
+    private final String name;
+    private final String displayName;
+    private final List<String> dialogue;
+    private final String quest;
+    private final List<String> preQuest;
+    private final int reqLevel;
 }

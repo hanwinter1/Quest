@@ -1,11 +1,12 @@
 package kr.hanwinter.quest;
 
-import kr.hanwinter.quest.dialogue.command.DialogueListCommand;
 import kr.hanwinter.quest.dialogue.manager.DialogueManager;
 import kr.hanwinter.quest.npc.gui.NPCConversationGUI;
 import kr.hanwinter.quest.npc.listener.NPCListener;
 import kr.hanwinter.quest.npc.manager.NPCManager;
 import kr.hanwinter.quest.quest.QuestStep;
+import kr.hanwinter.quest.quest.command.QuestCommand;
+import kr.hanwinter.quest.quest.gui.QuestGUI;
 import kr.hanwinter.quest.quest.manager.QuestManager;
 import kr.hanwinter.quest.user.listener.UserJoinQuitListener;
 import kr.hanwinter.quest.user.manager.UserManager;
@@ -86,13 +87,14 @@ public final class Main extends JavaPlugin {
     }
 
     public void registerCommands() {
-        this.getServer().getPluginCommand("대화문목록").setExecutor(new DialogueListCommand(this));
         this.getServer().getPluginCommand("quest").setExecutor(new PluginReload(this));
+        this.getServer().getPluginCommand("퀘스트").setExecutor(new QuestCommand(this));
     }
 
     public void registerEvents() {
         this.getServer().getPluginManager().registerEvents(new NPCListener(this), this);
         this.getServer().getPluginManager().registerEvents(new NPCConversationGUI.NPCConversationGUIListener(), this);
         this.getServer().getPluginManager().registerEvents(new UserJoinQuitListener(this.userManager), this);
+        this.getServer().getPluginManager().registerEvents(new QuestGUI.QuestGUIListener(), this);
     }
 }

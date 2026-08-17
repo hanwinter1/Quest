@@ -21,7 +21,7 @@ public class NPC {
         return dialogueList;
     }
 
-    private int id;
-    private String basicDialogue;
-    private List<String> dialogueList;
+    private final int id;
+    private final String basicDialogue;
+    private final List<String> dialogueList;
 }
